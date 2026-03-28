@@ -1,0 +1,235 @@
+{
+  "sharpeRatio": 0.5894,
+  "annualReturn": 0.0167,
+  "maxDrawdown": -0.348,
+  "hitRate": 0.529,
+  "totalTrades": 2367,
+  "transactionCosts": {
+    "feeBps": 10.0,
+    "slippageBps": 5.0,
+    "netSharpe": 0.1553
+  },
+  "walkForward": {
+    "windows": 9,
+    "positiveWindows": 5,
+    "avgOosSharpe": 0.1553
+  },
+  "customMetrics": {
+    "phase": "asset_class_decomposition",
+    "paperDefaultLookbackDays": 252,
+    "volWindow": 60,
+    "volTarget": 0.4,
+    "commonPeriodStart": "2007-04-18",
+    "commonPeriodEnd": "2026-03-27",
+    "totalAssets": 18,
+    "fullSampleGrossSharpe": 0.541,
+    "fullSampleNetSharpe": 0.1777,
+    "fullSampleAnnualReturn": 0.0155,
+    "fullSampleMaxDrawdown": -0.424,
+    "assetClassWalkForward": {
+      "equities": {
+        "wf_avg_gross_sharpe": 0.3555,
+        "wf_avg_net_sharpe": 0.2015,
+        "wf_positive_windows": 7,
+        "wf_total_windows": 9,
+        "full_gross_sharpe": 0.3362,
+        "full_net_sharpe": 0.206,
+        "full_gross_return": 0.0576,
+        "full_net_return": 0.0132,
+        "full_max_drawdown": -0.7701,
+        "full_hit_rate": 0.5075
+      },
+      "bonds": {
+        "wf_avg_gross_sharpe": 0.2093,
+        "wf_avg_net_sharpe": -0.1681,
+        "wf_positive_windows": 3,
+        "wf_total_windows": 9,
+        "full_gross_sharpe": 0.3365,
+        "full_net_sharpe": 0.0084,
+        "full_gross_return": 0.05,
+        "full_net_return": -0.0207,
+        "full_max_drawdown": -0.7105,
+        "full_hit_rate": 0.4923
+      },
+      "commodities": {
+        "wf_avg_gross_sharpe": 0.41,
+        "wf_avg_net_sharpe": 0.1718,
+        "wf_positive_windows": 5,
+        "wf_total_windows": 9,
+        "full_gross_sharpe": 0.4661,
+        "full_net_sharpe": 0.2567,
+        "full_gross_return": 0.081,
+        "full_net_return": 0.0327,
+        "full_max_drawdown": -0.585,
+        "full_hit_rate": 0.5077
+      },
+      "currencies": {
+        "wf_avg_gross_sharpe": 0.1731,
+        "wf_avg_net_sharpe": -0.2914,
+        "wf_positive_windows": 4,
+        "wf_total_windows": 9,
+        "full_gross_sharpe": 0.0464,
+        "full_net_sharpe": -0.3777,
+        "full_gross_return": -0.0202,
+        "full_net_return": -0.1206,
+        "full_max_drawdown": -0.9136,
+        "full_hit_rate": 0.4955
+      }
+    },
+    "perAssetMetrics": {
+      "equities": {
+        "SPY": {
+          "sharpeRatio": 0.4789,
+          "annualReturn": 0.1187,
+          "maxDrawdown": -0.7989,
+          "hitRate": 0.5194
+        },
+        "QQQ": {
+          "sharpeRatio": 0.475,
+          "annualReturn": 0.1169,
+          "maxDrawdown": -0.751,
+          "hitRate": 0.5303
+        },
+        "EFA": {
+          "sharpeRatio": 0.1456,
+          "annualReturn": -0.0289,
+          "maxDrawdown": -0.8808,
+          "hitRate": 0.4925
+        },
+        "EEM": {
+          "sharpeRatio": 0.0693,
+          "annualReturn": -0.0588,
+          "maxDrawdown": -0.9275,
+          "hitRate": 0.487
+        },
+        "IWM": {
+          "sharpeRatio": 0.1245,
+          "annualReturn": -0.0367,
+          "maxDrawdown": -0.828,
+          "hitRate": 0.4953
+        }
+      },
+      "bonds": {
+        "TLT": {
+          "sharpeRatio": 0.0407,
+          "annualReturn": -0.0667,
+          "maxDrawdown": -0.8648,
+          "hitRate": 0.4874
+        },
+        "IEF": {
+          "sharpeRatio": 0.321,
+          "annualReturn": 0.0529,
+          "maxDrawdown": -0.6397,
+          "hitRate": 0.4906
+        },
+        "SHY": {
+          "sharpeRatio": 1.0155,
+          "annualReturn": 0.073,
+          "maxDrawdown": -0.2203,
+          "hitRate": 0.4714
+        },
+        "AGG": {
+          "sharpeRatio": 0.2604,
+          "annualReturn": 0.0344,
+          "maxDrawdown": -0.7121,
+          "hitRate": 0.4951
+        },
+        "LQD": {
+          "sharpeRatio": 0.3162,
+          "annualReturn": 0.0513,
+          "maxDrawdown": -0.6863,
+          "hitRate": 0.5
+        }
+      },
+      "commodities": {
+        "GLD": {
+          "sharpeRatio": 0.4115,
+          "annualReturn": 0.0881,
+          "maxDrawdown": -0.8915,
+          "hitRate": 0.4994
+        },
+        "SLV": {
+          "sharpeRatio": 0.4129,
+          "annualReturn": 0.0886,
+          "maxDrawdown": -0.7961,
+          "hitRate": 0.494
+        },
+        "USO": {
+          "sharpeRatio": -0.0707,
+          "annualReturn": -0.1167,
+          "maxDrawdown": -0.9617,
+          "hitRate": 0.477
+        },
+        "UNG": {
+          "sharpeRatio": 0.3859,
+          "annualReturn": 0.0764,
+          "maxDrawdown": -0.6706,
+          "hitRate": 0.487
+        },
+        "VNQ": {
+          "sharpeRatio": 0.0572,
+          "annualReturn": -0.064,
+          "maxDrawdown": -0.9139,
+          "hitRate": 0.5019
+        }
+      },
+      "currencies": {
+        "EURUSD=X": {
+          "sharpeRatio": -0.2341,
+          "annualReturn": -0.1444,
+          "maxDrawdown": -0.9625,
+          "hitRate": 0.4883
+        },
+        "GBPUSD=X": {
+          "sharpeRatio": -0.0162,
+          "annualReturn": -0.0771,
+          "maxDrawdown": -0.9325,
+          "hitRate": 0.4979
+        },
+        "USDJPY=X": {
+          "sharpeRatio": 0.3293,
+          "annualReturn": 0.0533,
+          "maxDrawdown": -0.8112,
+          "hitRate": 0.5117
+        }
+      }
+    },
+    "diversification": {
+      "correlationMatrix": {
+        "equities": {
+          "equities": 1.0,
+          "bonds": 0.0127,
+          "commodities": 0.2698,
+          "currencies": 0.018
+        },
+        "bonds": {
+          "equities": 0.0127,
+          "bonds": 1.0,
+          "commodities": 0.1527,
+          "currencies": 0.0845
+        },
+        "commodities": {
+          "equities": 0.2698,
+          "bonds": 0.1527,
+          "commodities": 1.0,
+          "currencies": 0.0462
+        },
+        "currencies": {
+          "equities": 0.018,
+          "bonds": 0.0845,
+          "commodities": 0.0462,
+          "currencies": 1.0
+        }
+      },
+      "classSharpes": {
+        "equities": 0.3362,
+        "bonds": 0.3365,
+        "commodities": 0.4661,
+        "currencies": 0.0464
+      },
+      "avgClassSharpe": 0.2963,
+      "portfolioSharpe": 0.5091,
+      "diversificationRatio": 1.7182
+    }
+  }
+}

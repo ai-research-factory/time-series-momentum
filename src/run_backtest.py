@@ -174,6 +174,211 @@ def run_asset_class_breakdown(
     return breakdown
 
 
+def run_asset_class_walk_forward(
+    prices: pd.DataFrame,
+    asset_classes: dict[str, list[str]],
+    config: BacktestConfig | None = None,
+    lookback: int = DEFAULT_LOOKBACK,
+    vol_window: int = DEFAULT_VOL_WINDOW,
+    vol_target: float = DEFAULT_VOL_TARGET,
+) -> dict:
+    """
+    Run walk-forward validation per asset class sub-portfolio.
+
+    For each asset class, constructs a sub-portfolio (equal-weight of that class's
+    assets) and evaluates it with walk-forward OOS validation including costs.
+
+    Returns:
+        Dict mapping class name -> {wf_results, full_sample_gross, full_sample_net, summary}
+    """
+    if config is None:
+        config = BacktestConfig()
+
+    strat = run_strategy(prices, lookback=lookback, vol_window=vol_window, vol_target=vol_target)
+    strategy_rets = strat["strategy_returns"]
+    positions = strat["positions"]
+
+    class_results = {}
+
+    for cls_name, tickers in asset_classes.items():
+        available = [t for t in tickers if t in strategy_rets.columns]
+        if not available:
+            continue
+
+        # Sub-portfolio: equal-weight average of class assets
+        cls_returns = strategy_rets[available].mean(axis=1).dropna()
+        cls_positions = positions[available].mean(axis=1).reindex(cls_returns.index).fillna(0)
+
+        if len(cls_returns) < config.min_train_size * 2:
+            continue
+
+        # Walk-forward validation
+        validator = WalkForwardValidator(config)
+        wf_results = []
+
+        for train_idx, test_idx in validator.split(cls_returns.to_frame()):
+            test_returns = cls_returns.iloc[test_idx]
+            test_positions = cls_positions.iloc[test_idx]
+
+            if len(test_returns) == 0:
+                continue
+
+            gross_metrics = compute_metrics(test_returns)
+            net_returns = calculate_costs(test_returns, test_positions, config)
+            net_metrics = compute_metrics(net_returns)
+
+            trades = test_positions.diff().abs()
+            total_trades = int((trades > 0.01).sum())
+
+            result = BacktestResult(
+                window=len(wf_results),
+                train_start=str(cls_returns.index[train_idx[0]].date()),
+                train_end=str(cls_returns.index[train_idx[-1]].date()),
+                test_start=str(test_returns.index[0].date()),
+                test_end=str(test_returns.index[-1].date()),
+                gross_sharpe=gross_metrics["sharpeRatio"],
+                net_sharpe=net_metrics["sharpeRatio"],
+                annual_return=net_metrics["annualReturn"],
+                max_drawdown=net_metrics["maxDrawdown"],
+                total_trades=total_trades,
+                hit_rate=net_metrics["hitRate"],
+                pnl_series=net_returns,
+            )
+            wf_results.append(result)
+
+        # Full-sample metrics (gross and net)
+        full_gross_metrics = compute_metrics(cls_returns)
+        full_net_returns = calculate_costs(cls_returns, cls_positions, config)
+        full_net_metrics = compute_metrics(full_net_returns)
+
+        # Aggregate walk-forward stats
+        if wf_results:
+            avg_gross_sharpe = float(np.mean([r.gross_sharpe for r in wf_results]))
+            avg_net_sharpe = float(np.mean([r.net_sharpe for r in wf_results]))
+            positive_windows = sum(1 for r in wf_results if r.net_sharpe > 0)
+            n_windows = len(wf_results)
+        else:
+            avg_gross_sharpe = avg_net_sharpe = 0.0
+            positive_windows = n_windows = 0
+
+        class_results[cls_name] = {
+            "wf_results": wf_results,
+            "full_gross": full_gross_metrics,
+            "full_net": full_net_metrics,
+            "n_assets": len(available),
+            "assets": available,
+            "summary": {
+                "wf_avg_gross_sharpe": round(avg_gross_sharpe, 4),
+                "wf_avg_net_sharpe": round(avg_net_sharpe, 4),
+                "wf_positive_windows": positive_windows,
+                "wf_total_windows": n_windows,
+                "full_gross_sharpe": full_gross_metrics["sharpeRatio"],
+                "full_net_sharpe": full_net_metrics["sharpeRatio"],
+                "full_gross_return": full_gross_metrics["annualReturn"],
+                "full_net_return": full_net_metrics["annualReturn"],
+                "full_max_drawdown": full_net_metrics["maxDrawdown"],
+                "full_hit_rate": full_net_metrics["hitRate"],
+            },
+        }
+
+    return class_results
+
+
+def run_individual_asset_analysis(
+    prices: pd.DataFrame,
+    asset_classes: dict[str, list[str]],
+    lookback: int = DEFAULT_LOOKBACK,
+    vol_window: int = DEFAULT_VOL_WINDOW,
+    vol_target: float = DEFAULT_VOL_TARGET,
+) -> dict:
+    """
+    Compute full-sample metrics for each individual asset.
+
+    Returns:
+        Dict mapping asset_class -> {ticker -> metrics}
+    """
+    strat = run_strategy(prices, lookback=lookback, vol_window=vol_window, vol_target=vol_target)
+    strategy_rets = strat["strategy_returns"]
+
+    per_asset = {}
+    for cls_name, tickers in asset_classes.items():
+        cls_assets = {}
+        for t in tickers:
+            if t not in strategy_rets.columns:
+                continue
+            asset_rets = strategy_rets[t].dropna()
+            if len(asset_rets) > 0:
+                cls_assets[t] = compute_metrics(asset_rets)
+        if cls_assets:
+            per_asset[cls_name] = cls_assets
+
+    return per_asset
+
+
+def run_diversification_analysis(
+    prices: pd.DataFrame,
+    asset_classes: dict[str, list[str]],
+    lookback: int = DEFAULT_LOOKBACK,
+    vol_window: int = DEFAULT_VOL_WINDOW,
+    vol_target: float = DEFAULT_VOL_TARGET,
+) -> dict:
+    """
+    Analyze diversification benefits across asset classes.
+
+    Computes:
+    - Correlation matrix of asset class sub-portfolio returns
+    - Diversification ratio: portfolio Sharpe vs average of class Sharpes
+    """
+    strat = run_strategy(prices, lookback=lookback, vol_window=vol_window, vol_target=vol_target)
+    strategy_rets = strat["strategy_returns"]
+
+    # Build class sub-portfolio return series
+    class_return_series = {}
+    for cls_name, tickers in asset_classes.items():
+        available = [t for t in tickers if t in strategy_rets.columns]
+        if available:
+            cls_returns = strategy_rets[available].mean(axis=1).dropna()
+            class_return_series[cls_name] = cls_returns
+
+    if len(class_return_series) < 2:
+        return {"correlation_matrix": {}, "diversification_ratio": 0.0}
+
+    # Build aligned DataFrame
+    cls_df = pd.DataFrame(class_return_series).dropna()
+
+    # Correlation matrix
+    corr_matrix = cls_df.corr()
+    corr_dict = {col: {row: round(corr_matrix.loc[row, col], 4)
+                       for row in corr_matrix.index}
+                 for col in corr_matrix.columns}
+
+    # Portfolio return (equal-weight across classes)
+    portfolio_ret = cls_df.mean(axis=1)
+    portfolio_metrics = compute_metrics(portfolio_ret)
+
+    # Average of individual class Sharpes
+    class_sharpes = {}
+    for cls_name, rets in class_return_series.items():
+        aligned = rets.reindex(cls_df.index).dropna()
+        if len(aligned) > 0:
+            m = compute_metrics(aligned)
+            class_sharpes[cls_name] = m["sharpeRatio"]
+
+    avg_class_sharpe = float(np.mean(list(class_sharpes.values()))) if class_sharpes else 0.0
+    portfolio_sharpe = portfolio_metrics["sharpeRatio"]
+
+    # Diversification ratio: portfolio Sharpe / avg class Sharpe
+    div_ratio = portfolio_sharpe / avg_class_sharpe if avg_class_sharpe != 0 else 0.0
+
+    return {
+        "correlation_matrix": corr_dict,
+        "class_sharpes": class_sharpes,
+        "avg_class_sharpe": round(avg_class_sharpe, 4),
+        "portfolio_sharpe": portfolio_sharpe,
+        "diversification_ratio": round(div_ratio, 4),
+    }
+
+
 def run_lookback_optimization(
     prices: pd.DataFrame,
     lookback_months: list[int] | None = None,
@@ -279,11 +484,11 @@ def run_lookback_optimization(
 
 
 def main():
-    """Main entry point for running the TSMOM backtest."""
+    """Main entry point for running the TSMOM backtest — Phase 6: Asset Class Decomposition."""
     import yaml
 
     print("=" * 60)
-    print("Time Series Momentum - Phase 5 Lookback Optimization")
+    print("Time Series Momentum - Phase 6 Asset Class Decomposition")
     print("=" * 60)
 
     # Load prices
@@ -304,52 +509,62 @@ def main():
 
     config = BacktestConfig()
 
-    # 1. Lookback optimization across [6, 9, 12, 15, 18] months
-    print("\n--- Lookback Period Optimization ---")
-    opt = run_lookback_optimization(prices_common, config=config)
-
-    # Print summary table
-    print("\n--- Summary Table ---")
-    print(f"{'Lookback':>10} {'WF Gross':>10} {'WF Net':>10} {'Full Gross':>10} "
-          f"{'Full Net':>10} {'WF Return':>10} {'WF MaxDD':>10} {'Pos Win':>8} {'Trades':>8}")
-    for s in opt["summary"]:
-        print(f"{s['lookback_months']:>7}mo  "
-              f"{s['wf_avg_gross_sharpe']:>10.4f} {s['wf_avg_net_sharpe']:>10.4f} "
-              f"{s['full_gross_sharpe']:>10.4f} {s['full_net_sharpe']:>10.4f} "
-              f"{s['wf_avg_annual_return']:>10.4f} {s['wf_worst_drawdown']:>10.4f} "
-              f"{s['wf_positive_windows']:>3}/{s['wf_total_windows']:<3} "
-              f"{s['wf_total_trades']:>8}")
-
-    best_months = opt["best_lookback_months"]
-    best_days = opt["best_lookback"]
-    print(f"\nBest lookback by WF net Sharpe: {best_months} months ({best_days} days)")
-
-    # 2. Run detailed walk-forward for the paper's default (12 months) for primary metrics
-    print("\n--- Paper Default (12 months) Walk-Forward Details ---")
-    default_data = opt["results_by_lookback"][252]
-    default_wf_results = default_data["wf_results"]
-    for r in default_wf_results:
-        print(f"  Window {r.window}: test={r.test_start} to {r.test_end}, "
-              f"gross_sharpe={r.gross_sharpe:.4f}, net_sharpe={r.net_sharpe:.4f}")
-
-    # 3. Full-sample for paper default
-    full_sample = default_data["full_sample"]
-    print(f"\n  Full-Sample Gross Sharpe: {full_sample['gross']['sharpeRatio']:.4f}")
+    # 1. Run overall portfolio walk-forward (paper default 12mo) as baseline
+    print("\n--- Overall Portfolio Walk-Forward (12mo) ---")
+    wf_results, full_gross, full_net = run_walk_forward_backtest(prices_common, config)
+    full_sample = run_full_sample_backtest(prices_common, config)
+    print(f"  Full-Sample Gross Sharpe: {full_sample['gross']['sharpeRatio']:.4f}")
     print(f"  Full-Sample Net Sharpe:   {full_sample['net']['sharpeRatio']:.4f}")
+    print(f"  WF Avg Net Sharpe:        {np.mean([r.net_sharpe for r in wf_results]):.4f}")
 
-    # 4. Asset class breakdown at paper default
-    print("\n--- Asset Class Breakdown (12mo, Full Sample, Gross) ---")
-    breakdown = run_asset_class_breakdown(prices_common, asset_classes)
-    for cls_name, metrics in breakdown.items():
-        print(f"  {cls_name}: Sharpe={metrics['sharpeRatio']:.4f}, "
-              f"Return={metrics['annualReturn']:.4f}")
+    # 2. Asset class walk-forward analysis (core of Phase 6)
+    print("\n--- Asset Class Walk-Forward Analysis ---")
+    class_wf = run_asset_class_walk_forward(prices_common, asset_classes, config)
+    print(f"\n{'Class':<14} {'Assets':>6} {'WF Gross':>10} {'WF Net':>10} "
+          f"{'Full Gross':>11} {'Full Net':>10} {'Pos Win':>8} {'MaxDD':>8}")
+    for cls_name, data in class_wf.items():
+        s = data["summary"]
+        print(f"  {cls_name:<12} {data['n_assets']:>4}   "
+              f"{s['wf_avg_gross_sharpe']:>10.4f} {s['wf_avg_net_sharpe']:>10.4f} "
+              f"{s['full_gross_sharpe']:>11.4f} {s['full_net_sharpe']:>10.4f} "
+              f"{s['wf_positive_windows']:>3}/{s['wf_total_windows']:<3} "
+              f"{s['full_max_drawdown']:>8.4f}")
 
-    # 5. Generate metrics.json — primary metrics use paper default (12mo)
-    # Best lookback results stored in customMetrics
-    best_data = opt["results_by_lookback"][best_days]
+    # 3. Per-asset individual analysis
+    print("\n--- Individual Asset Performance (Full Sample, Gross) ---")
+    per_asset = run_individual_asset_analysis(prices_common, asset_classes)
+    for cls_name, assets in per_asset.items():
+        print(f"\n  {cls_name}:")
+        for ticker, metrics in assets.items():
+            print(f"    {ticker:<12} Sharpe={metrics['sharpeRatio']:>7.4f}  "
+                  f"Return={metrics['annualReturn']:>7.4f}  "
+                  f"MaxDD={metrics['maxDrawdown']:>8.4f}  "
+                  f"HitRate={metrics['hitRate']:.4f}")
 
+    # 4. Diversification analysis
+    print("\n--- Diversification Analysis ---")
+    div_analysis = run_diversification_analysis(prices_common, asset_classes)
+    print(f"  Portfolio Sharpe:       {div_analysis['portfolio_sharpe']:.4f}")
+    print(f"  Avg Class Sharpe:       {div_analysis['avg_class_sharpe']:.4f}")
+    print(f"  Diversification Ratio:  {div_analysis['diversification_ratio']:.4f}")
+    print("\n  Correlation Matrix:")
+    corr = div_analysis["correlation_matrix"]
+    cls_names = list(corr.keys())
+    print(f"    {'':>14}", end="")
+    for c in cls_names:
+        print(f"{c:>12}", end="")
+    print()
+    for r in cls_names:
+        print(f"    {r:>14}", end="")
+        for c in cls_names:
+            print(f"{corr[c][r]:>12.4f}", end="")
+        print()
+
+    # 5. Generate metrics.json
+    # Primary metrics: overall portfolio walk-forward at paper default (12mo)
+    class_summaries = {cls: data["summary"] for cls, data in class_wf.items()}
     custom_metrics = {
-        "phase": "lookback_optimization",
+        "phase": "asset_class_decomposition",
         "paperDefaultLookbackDays": DEFAULT_LOOKBACK,
         "volWindow": DEFAULT_VOL_WINDOW,
         "volTarget": DEFAULT_VOL_TARGET,
@@ -360,18 +575,21 @@ def main():
         "fullSampleNetSharpe": full_sample["net"]["sharpeRatio"],
         "fullSampleAnnualReturn": full_sample["net"]["annualReturn"],
         "fullSampleMaxDrawdown": full_sample["net"]["maxDrawdown"],
-        "assetClassBreakdown": breakdown,
-        "lookbackComparison": opt["summary"],
-        "bestLookbackMonths": best_months,
-        "bestLookbackDays": best_days,
-        "bestLookbackWfNetSharpe": best_data["metrics"]["wf_avg_net_sharpe"],
-        "bestLookbackFullNetSharpe": best_data["full_sample"]["net"]["sharpeRatio"],
+        "assetClassWalkForward": class_summaries,
+        "perAssetMetrics": per_asset,
+        "diversification": {
+            "correlationMatrix": div_analysis["correlation_matrix"],
+            "classSharpes": div_analysis["class_sharpes"],
+            "avgClassSharpe": div_analysis["avg_class_sharpe"],
+            "portfolioSharpe": div_analysis["portfolio_sharpe"],
+            "diversificationRatio": div_analysis["diversification_ratio"],
+        },
     }
 
-    metrics_json = generate_metrics_json(default_wf_results, config, custom_metrics)
+    metrics_json = generate_metrics_json(wf_results, config, custom_metrics)
 
     # Save reports
-    report_dir = Path("reports/cycle_5")
+    report_dir = Path("reports/cycle_6")
     report_dir.mkdir(parents=True, exist_ok=True)
 
     with open(report_dir / "metrics.json", "w") as f:
@@ -380,9 +598,11 @@ def main():
 
     # Return for use in technical findings
     return {
-        "optimization": opt,
+        "wf_results": wf_results,
         "full_sample": full_sample,
-        "breakdown": breakdown,
+        "class_wf": class_wf,
+        "per_asset": per_asset,
+        "diversification": div_analysis,
         "metrics_json": metrics_json,
         "config": config,
     }

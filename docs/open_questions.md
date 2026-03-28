@@ -42,3 +42,17 @@
 
 ### Paper Default Remains Appropriate
 - The 12-month lookback (paper default) is not the best performer in our sample but is a reasonable middle-ground. Per reproduction mode rules, we report it as the primary result and classify the 6-month finding as a near-neighbor comparison, not an improvement recommendation.
+
+## Phase 6: Asset Class Decomposition Observations
+
+### Currency Weakness vs Paper
+- The paper reports strong TSMOM for currencies, but our 3-currency universe (EURUSD, GBPUSD, USDJPY) shows negative net Sharpe (-0.38). The paper uses ~10+ FX futures; our limited universe and ETF proxy issues (USDJPY sign convention, spot vs forward returns) likely explain the discrepancy.
+
+### SHY Anomalous Sharpe
+- SHY (1-3 Year Treasury) shows a 1.02 gross Sharpe — the highest individual asset. This is driven by its very low volatility making the vol-scaling factor consistently high, combined with a persistent positive trend in short-term bonds. This may not reflect genuine momentum signal strength but rather the interaction of vol-scaling with a low-vol, positive-drift asset.
+
+### High Drawdowns per Class
+- Individual asset class sub-portfolios show much larger drawdowns (58-91%) compared to the diversified portfolio (42%). This highlights that diversification across classes is essential for risk management, and running TSMOM on a single class would not be viable.
+
+### Transaction Cost Impact is Class-Dependent
+- Bonds and currencies suffer disproportionate cost erosion (0.33 and 0.42 Sharpe points respectively). The daily vol-scaling generates frequent small position changes in these lower-volatility assets, driving up turnover without commensurate gross signal improvement. A position change threshold or less frequent rebalancing could mitigate this.

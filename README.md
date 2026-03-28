@@ -42,17 +42,21 @@ This computes:
 - Gross and net-of-cost performance metrics
 - Lookback period comparison: [6, 9, 12, 15, 18] months
 
-### Key Results (Phase 5 — Lookback Optimization)
+### Key Results (Phase 6 — Asset Class Decomposition)
 
-| Lookback | WF Net Sharpe | Full Net Sharpe | Positive Windows | Trades |
-|----------|---------------|-----------------|------------------|--------|
-| 6 mo     | **0.2727**    | **0.3633**      | 6/9 (67%)        | 2581   |
-| 9 mo     | -0.0742       | 0.0324          | 4/9 (44%)        | 2432   |
-| 12 mo    | 0.1553        | 0.1777          | 5/9 (56%)        | 2367   |
-| 15 mo    | -0.0183       | -0.0159         | 6/9 (67%)        | 2236   |
-| 18 mo    | 0.2671        | 0.2613          | 7/9 (78%)        | 2113   |
+**Asset class walk-forward (12mo lookback, net of 15 bps costs):**
 
-Paper default (12mo) ranks 3rd. Best OOS: 6mo. Best stability: 18mo (78% positive).
+| Class        | Assets | WF Net Sharpe | Full Net Sharpe | Positive Windows | Full MaxDD |
+|-------------|--------|---------------|-----------------|------------------|-----------|
+| Equities    | 5      | **0.2015**    | 0.2060          | **7/9 (78%)**    | -77.0%    |
+| Bonds       | 5      | -0.1681       | 0.0084          | 3/9 (33%)        | -71.1%    |
+| Commodities | 5      | 0.1718        | **0.2567**      | 5/9 (56%)        | -58.5%    |
+| Currencies  | 3      | -0.2914       | -0.3777         | 4/9 (44%)        | -91.4%    |
+| **Portfolio**| 18    | 0.1553        | 0.1777          | 5/9 (56%)        | -42.4%    |
+
+**Diversification benefit**: Portfolio Sharpe (0.51) is 1.72x higher than average class Sharpe (0.30). Cross-class correlations are low (0.01–0.27).
+
+Commodities are the strongest class. Equities are the most stable (78% positive windows). Currencies are weak due to limited 3-asset universe.
 
 ## Project Structure
 
