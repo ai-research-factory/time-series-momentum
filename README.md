@@ -11,12 +11,27 @@ See [CLAUDE.md](CLAUDE.md) for implementation instructions and phase plan.
 
 ```bash
 pip install -e ".[dev]"
-pytest tests/
+pip install pyyaml pyarrow requests
 ```
 
-## Data
+## Data Pipeline
+
+Download daily price data for all assets defined in `config/assets.yaml`:
+
+```bash
+python3 scripts/download_data.py
+```
+
+This fetches 18 assets across 4 asset classes (equities, bonds, commodities, currencies) from the ARF Data API and saves processed data to `data/processed/prices.parquet`.
 
 Data is fetched from the ARF Data API at runtime. Do not commit data files.
+
+## Project Structure
+
+- `src/data_loader.py` — `DataLoader` class for fetching and preprocessing multi-asset price data
+- `src/backtest.py` — Walk-forward validation and backtest framework
+- `config/assets.yaml` — Asset universe configuration
+- `scripts/download_data.py` — Data download execution script
 
 ## Reports
 

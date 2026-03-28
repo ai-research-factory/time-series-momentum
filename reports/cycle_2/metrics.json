@@ -1,0 +1,27 @@
+{
+  "sharpeRatio": 0.0,
+  "annualReturn": 0.0,
+  "maxDrawdown": 0.0,
+  "hitRate": 0.0,
+  "totalTrades": 0,
+  "transactionCosts": {
+    "feeBps": 10,
+    "slippageBps": 5,
+    "netSharpe": 0.0
+  },
+  "walkForward": {
+    "windows": 0,
+    "positiveWindows": 0,
+    "avgOosSharpe": 0.0
+  },
+  "customMetrics": {
+    "phase": "data_pipeline",
+    "totalAssets": 18,
+    "assetClasses": 4,
+    "dateRangeStart": "1993-01-29",
+    "dateRangeEnd": "2026-03-27",
+    "totalRows": 8617,
+    "tickersFetched": 18,
+    "tickersFailed": 0
+  }
+}

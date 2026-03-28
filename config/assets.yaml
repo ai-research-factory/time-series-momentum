@@ -1,0 +1,29 @@
+# Asset universe for Time Series Momentum strategy
+# Based on paper's proxy universe across four asset classes
+# Some tickers substituted due to ARF Data API availability
+
+equities:
+  - SPY    # S&P 500
+  - QQQ    # NASDAQ 100
+  - EFA    # International Developed (substitute for EWJ)
+  - EEM    # Emerging Markets
+  - IWM    # Russell 2000
+
+bonds:
+  - TLT    # 20+ Year Treasury
+  - IEF    # 7-10 Year Treasury
+  - SHY    # 1-3 Year Treasury
+  - AGG    # US Aggregate Bond (substitute for BND)
+  - LQD    # Investment Grade Corporate
+
+commodities:
+  - GLD    # Gold
+  - SLV    # Silver
+  - USO    # Crude Oil
+  - UNG    # Natural Gas
+  - VNQ    # Real Estate (REIT)
+
+currencies:
+  - EURUSD=X   # Euro/USD
+  - GBPUSD=X   # British Pound/USD
+  - USDJPY=X   # USD/Japanese Yen (substitute for JPY=X)
