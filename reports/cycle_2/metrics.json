@@ -21,6 +21,8 @@
     "dateRangeStart": "1993-01-29",
     "dateRangeEnd": "2026-03-27",
     "totalRows": 8617,
+    "leadingNaNs": 43936,
+    "commonPeriodStart": "2007-04-18",
     "tickersFetched": 18,
     "tickersFailed": 0
   }
