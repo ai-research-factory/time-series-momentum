@@ -4,7 +4,7 @@
 
 ## Overview
 
-Automated reproduction and validation of the paper above.
+Automated reproduction and validation of the Time Series Momentum paper.
 See [CLAUDE.md](CLAUDE.md) for implementation instructions and phase plan.
 
 ## Setup
@@ -26,8 +26,34 @@ This fetches 18 assets across 4 asset classes (equities, bonds, commodities, cur
 
 Data is fetched from the ARF Data API at runtime. Do not commit data files.
 
+## Running the Backtest
+
+Run the TSMOM strategy with walk-forward validation:
+
+```bash
+python3 -m src.run_backtest
+```
+
+This computes:
+- Time series momentum signals (252-day lookback)
+- Volatility scaling (60-day rolling vol, 40% annual target)
+- Equal-weight portfolio across 18 assets
+- Walk-forward OOS validation (9 windows)
+- Gross and net-of-cost performance metrics
+
+### Key Results (Phase 3)
+
+| Metric | Gross | Net (15 bps) |
+|--------|-------|-------------|
+| Sharpe Ratio | 0.54 | 0.18 |
+| Annual Return | 4.86% | 1.55% |
+| Max Drawdown | -38.7% | -42.4% |
+| Walk-Forward Positive Windows | 5/9 (55.6%) |
+
 ## Project Structure
 
+- `src/strategy.py` — TSMOM signal, volatility scaling, portfolio construction
+- `src/run_backtest.py` — Walk-forward backtest runner and reporting
 - `src/data_loader.py` — `DataLoader` class for fetching and preprocessing multi-asset price data
 - `src/backtest.py` — Walk-forward validation and backtest framework
 - `config/assets.yaml` — Asset universe configuration

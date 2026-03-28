@@ -1,0 +1,56 @@
+{
+  "sharpeRatio": 0.5894,
+  "annualReturn": 0.0167,
+  "maxDrawdown": -0.348,
+  "hitRate": 0.529,
+  "totalTrades": 2367,
+  "transactionCosts": {
+    "feeBps": 10.0,
+    "slippageBps": 5.0,
+    "netSharpe": 0.1553
+  },
+  "walkForward": {
+    "windows": 9,
+    "positiveWindows": 5,
+    "avgOosSharpe": 0.1553
+  },
+  "customMetrics": {
+    "phase": "backtest_vol_scaling",
+    "lookbackDays": 252,
+    "volWindow": 60,
+    "volTarget": 0.4,
+    "commonPeriodStart": "2007-04-18",
+    "commonPeriodEnd": "2026-03-27",
+    "totalAssets": 18,
+    "fullSampleGrossSharpe": 0.541,
+    "fullSampleNetSharpe": 0.1777,
+    "fullSampleAnnualReturn": 0.0155,
+    "fullSampleMaxDrawdown": -0.424,
+    "assetClassBreakdown": {
+      "equities": {
+        "sharpeRatio": 0.3362,
+        "annualReturn": 0.0576,
+        "maxDrawdown": -0.6475,
+        "hitRate": 0.5126
+      },
+      "bonds": {
+        "sharpeRatio": 0.3365,
+        "annualReturn": 0.05,
+        "maxDrawdown": -0.4884,
+        "hitRate": 0.5058
+      },
+      "commodities": {
+        "sharpeRatio": 0.4661,
+        "annualReturn": 0.081,
+        "maxDrawdown": -0.446,
+        "hitRate": 0.5134
+      },
+      "currencies": {
+        "sharpeRatio": 0.0464,
+        "annualReturn": -0.0202,
+        "maxDrawdown": -0.6512,
+        "hitRate": 0.5087
+      }
+    }
+  }
+}
